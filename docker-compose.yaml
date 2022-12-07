@@ -1,0 +1,136 @@
+version: "3.7"
+
+# set env variable COMPOSE_PROJECT_NAME and
+# label com.docker.compose.project
+#name: templateProject
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: kat_postgres
+    networks:
+      - backend
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: kotlin_template
+
+  keycloak:
+    image: jboss/keycloak:latest
+    container_name: kat_keycloak
+    ports:
+      - "8180:8080"
+    networks:
+      - backend
+    depends_on:
+      - postgres
+    volumes:
+      - ./keycloak-export.json:/tmp/keycloak-export.json
+    environment:
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: admin
+      DB_ADDR: postgres
+      DB_PORT: 5432
+      DB_DATABASE: kotlin_template
+      DB_SCHEMA: kc
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      KEYCLOAK_IMPORT: /tmp/keycloak-export.json
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+
+  backend-api:
+    image: wallysoncs/kotlin-api-template:0.1
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend-api
+    depends_on:
+      - postgres
+      - keycloak
+    ports:
+      - "8080:8080"
+    networks:
+      - backend
+    environment:
+      SPRING_ACTIVE_PROFILE: local
+      LOG_LEVEL: DEBUG
+      DATABASE_URL: jdbc:postgresql://postgres:5432/kotlin_template
+      DATABASE_USER: postgres
+      DATABASE_PWD: postgres
+      OAUTH2_ISSUER_URI: http://keycloak:8080/auth/realms/project_realm
+      OAUTH2_JWK_SET_URI: http://keycloak:8080/auth/realms/project_realm/protocol/openid-connect/certs
+    logging:
+      driver: json-file
+      options:
+        tag: "{{.ImageName}} | {{.Name}} | {{.ID}}"
+
+  ####### OBSERVABILITY CONTAINERS #######
+  grafana:
+    depends_on:
+      - loki
+      - prometheus
+      - promtail
+    image: grafana/grafana
+    profiles:
+      - observability
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    user: root
+    volumes:
+      - ./observability/grafana-datasources:/etc/grafana/provisioning/datasources
+      - ./observability/grafana-data:/var/lib/grafana
+    networks:
+      - observability
+
+  loki:
+    image: grafana/loki
+    profiles:
+      - observability
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - observability
+
+  promtail:
+#    depends_on:
+#      - loki
+    image: grafana/promtail
+    profiles:
+      - observability
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./observability/promtail-config.yaml:/etc/promtail/promtail-config.yaml
+    command: -config.file=/etc/promtail/promtail-config.yaml
+    networks:
+      - observability
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    profiles:
+      - observability
+    user: root
+    volumes:
+      - ./observability/prometheus-config.yaml:/etc/prometheus/prometheus.yml
+      - ./observability/prometheus_data:/prometheus
+    networks:
+      - observability
+    command: >-
+      --config.file=/etc/prometheus/prometheus.yml
+      --storage.tsdb.path=/prometheus
+      --web.console.libraries=/usr/share/prometheus/console_libraries
+      --web.console.templates=/usr/share/prometheus/consoles
+
+networks:
+  observability:
+  backend:

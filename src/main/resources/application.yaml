@@ -1,0 +1,59 @@
+server:
+  port: 8080
+
+spring:
+  profiles:
+    active: ${SPRING_ACTIVE_PROFILE:local}
+  application:
+    name: kotlin-api-template
+  main:
+    banner-mode: off
+
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/kotlin_template}
+    username: ${DATABASE_USER:postgres}
+    password: ${DATABASE_PWD:postgres}
+    hikari:
+      maximum-pool-size: 4
+      pool-name: "kotlin_template_connection_pool"
+
+  jpa:
+    open-in-view: false
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+    database-platform: org.hibernate.dialect.PostgreSQL81Dialect
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8180/auth/realms/project_realm}
+          jwk-set-uri: ${OAUTH2_JWK_SET_URI:http://localhost:8180/auth/realms/project_realm/protocol/openid-connect/certs}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - '*'
+          - prometheus
+          - metrics
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  endpoint:
+    metrics:
+      enabled: false
+    prometheus:
+      enabled: true
+
+logging:
+  level:
+    org:
+      springframework:
+        security: ${LOG_LEVEL:DEBUG}
+    com:
+      wallyson:
+        kotlinapitemplate: ${LOG_LEVEL:DEBUG}

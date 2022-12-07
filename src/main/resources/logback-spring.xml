@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+<!--    <include resource="org/springframework/boot/logging/logback/file-appender.xml"/>-->
+
+    <springProfile name="production">
+        <!--        <appender name="JSON_CONSOLE" class="ch.qos.logback.core.rolling.RollingFileAppender">-->
+        <!--            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">-->
+        <!--                <fileNamePattern>log-%d{yyyy-MM-dd}.log</fileNamePattern>-->
+        <!--                <maxHistory>12</maxHistory>-->
+        <!--                <totalSizeCap>500MB</totalSizeCap>-->
+        <!--            </rollingPolicy>-->
+        <!--            <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">-->
+        <!--                <maxFileSize>3MB</maxFileSize>-->
+        <!--            </triggeringPolicy>-->
+        <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <layout class="ch.qos.logback.contrib.json.classic.JsonLayout">
+                <jsonFormatter class="ch.qos.logback.contrib.jackson.JacksonJsonFormatter"/>
+                <timestampFormat>yyyy-MM-dd HH:mm:ss.SSS</timestampFormat>
+                <appendLineSeparator>true</appendLineSeparator>
+            </layout>
+        </appender>
+
+        <root level="info">
+            <appender-ref ref="JSON_CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="!production">
+        <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+        <root level="info">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+</configuration>

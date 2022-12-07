@@ -1,0 +1,86 @@
+version: "3"
+
+services:
+  loki:
+    image: grafana/loki
+#    volumes:
+#      - ./loki-config.yaml:/etc/loki/loki-config.yaml
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - observability
+
+  promtail:
+    depends_on:
+      - loki
+    image: grafana/promtai
+    volumes:
+#      - /var/log:/var/log
+      - ./promtail-config.yaml:/etc/promtail/promtail-config.yaml
+      # to read container labels and logs
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/var/lib/docker/containers
+    command: -config.file=/etc/promtail/promtail-config.yaml
+    networks:
+      - world
+      - observability
+
+#  cadvisor:
+#    image: google/cadvisor:v0.33.0
+#    volumes:
+#      - /:/rootfs:ro
+#      - /var/run:/var/run:ro
+#      - /sys:/sys:ro
+#      - /var/lib/docker/:/var/lib/docker:ro
+#      - /dev/disk/:/dev/disk:ro
+#    networks:
+#      - observability
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    user: root
+    volumes:
+      - ./prometheus-config.yaml:/etc/prometheus/prometheus.yml
+      - ./prometheus_data:/prometheus
+    networks:
+      - world
+      - observability
+    command: >-
+      --config.file=/etc/prometheus/prometheus.yml
+      --storage.tsdb.path=/prometheus
+      --web.console.libraries=/usr/share/prometheus/console_libraries
+      --web.console.templates=/usr/share/prometheus/consoles
+
+  grafana:
+    depends_on:
+      - loki
+      - prometheus
+      - promtail
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    user: root
+    volumes:
+      - ./grafana-datasources:/etc/grafana/provisioning/datasources
+      - ./grafana-data:/var/lib/grafana
+    networks:
+      - world
+      - observability
+
+networks:
+  world:
+    external: true
+  #    driver: bridge
+#    ipam:
+#      driver: default
+#      config:
+#        - subnet: 192.168.0.0/24
+#          gateway: 192.168.0.1
+  observability:
+    internal: true
