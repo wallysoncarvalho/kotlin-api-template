@@ -1,10 +1,7 @@
 version: "3.7"
 
-# set env variable COMPOSE_PROJECT_NAME and
-# label com.docker.compose.project
-#name: templateProject
-
 services:
+
   postgres:
     image: postgres:15
     container_name: kat_postgres
@@ -44,11 +41,11 @@ services:
       KC_METRICS_ENABLED: "true"
 
   backend-api:
-    image: wallysoncs/kotlin-api-template:0.1
+    image: wcs/kotlin-api-template:0.1
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: backend-api
+    container_name: kat_backend-api
     depends_on:
       - postgres
       - keycloak
@@ -56,18 +53,16 @@ services:
       - "8080:8080"
     networks:
       - backend
+      - observability
     environment:
-      SPRING_ACTIVE_PROFILE: local
+      SPRING_ACTIVE_PROFILE: production
       LOG_LEVEL: DEBUG
       DATABASE_URL: jdbc:postgresql://postgres:5432/kotlin_template
       DATABASE_USER: postgres
       DATABASE_PWD: postgres
       OAUTH2_ISSUER_URI: http://keycloak:8080/auth/realms/project_realm
       OAUTH2_JWK_SET_URI: http://keycloak:8080/auth/realms/project_realm/protocol/openid-connect/certs
-    logging:
-      driver: json-file
-      options:
-        tag: "{{.ImageName}} | {{.Name}} | {{.ID}}"
+      OIDC_URL: http://keycloak:8080/auth/realms/project_realm/protocol/openid-connect/token
 
   ####### OBSERVABILITY CONTAINERS #######
   grafana:
@@ -76,6 +71,7 @@ services:
       - prometheus
       - promtail
     image: grafana/grafana
+    container_name: kat_grafana
     profiles:
       - observability
     ports:
@@ -92,6 +88,7 @@ services:
 
   loki:
     image: grafana/loki
+    container_name: kat_loki
     profiles:
       - observability
     ports:
@@ -101,13 +98,13 @@ services:
       - observability
 
   promtail:
-#    depends_on:
-#      - loki
     image: grafana/promtail
+    container_name: kat_promtail
     profiles:
       - observability
     volumes:
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers
+      - /var/run/docker.sock:/var/run/docker.sock
       - ./observability/promtail-config.yaml:/etc/promtail/promtail-config.yaml
     command: -config.file=/etc/promtail/promtail-config.yaml
     networks:
@@ -115,6 +112,7 @@ services:
 
   prometheus:
     image: prom/prometheus
+    container_name: kat_prometheus
     ports:
       - "9090:9090"
     profiles:
@@ -130,6 +128,17 @@ services:
       --storage.tsdb.path=/prometheus
       --web.console.libraries=/usr/share/prometheus/console_libraries
       --web.console.templates=/usr/share/prometheus/consoles
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: kat_cadvisor
+    networks:
+      - observability
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
 
 networks:
   observability:
