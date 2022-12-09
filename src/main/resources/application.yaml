@@ -57,3 +57,12 @@ logging:
     com:
       wallyson:
         kotlinapitemplate: ${LOG_LEVEL:DEBUG}
+
+springdoc:
+  api-docs:
+    path: /doc/api-docs
+  swagger-ui:
+    path: /doc/swagger-ui.html
+
+openidconnect:
+  url: ${OIDC_URL:http://localhost:8180/auth/realms/project_realm/protocol/openid-connect/token}

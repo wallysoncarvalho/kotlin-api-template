@@ -32,6 +32,11 @@ dependencies {
 	implementation("ch.qos.logback.contrib:logback-jackson:0.1.5")
 	implementation("io.micrometer:micrometer-registry-prometheus:1.10.2")
 
+    implementation("org.springdoc:springdoc-openapi-ui:1.6.13")
+	implementation("org.springdoc:springdoc-openapi-webmvc-core:1.6.13")
+	implementation("org.springdoc:springdoc-openapi-security:1.6.13")
+	implementation("org.springdoc:springdoc-openapi-kotlin:1.6.13")
+
 	runtimeOnly("org.postgresql:postgresql")
 
 	testImplementation("org.springframework.boot:spring-boot-starter-test")

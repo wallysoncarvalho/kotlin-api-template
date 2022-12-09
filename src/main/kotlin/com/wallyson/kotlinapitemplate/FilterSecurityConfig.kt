@@ -16,7 +16,7 @@ class FilterSecurityConfig {
             .authorizeRequests()
             .antMatchers("/private/**")
             .hasRole("ADMIN")
-            .antMatchers("/public/**", "/actuator", "/actuator/*").permitAll()
+            .antMatchers("/public/**", "/actuator", "/actuator/*", "/doc/**").permitAll()
             .anyRequest()
             .authenticated()
             .and()
