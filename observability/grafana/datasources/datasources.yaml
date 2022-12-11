@@ -11,6 +11,7 @@ datasources:
     orgId: 1
     readOnly: false
     typeLogoUrl: public/app/plugins/datasource/loki/img/loki_icon.svg
+
   - name: prometheus
     access: proxy
     type: prometheus

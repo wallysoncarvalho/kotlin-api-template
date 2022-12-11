@@ -1,9 +1,7 @@
 
-
-observability:
-	docker compose up -d
-
-infra:
+allup:
+	docker compose --profile observability up -d
+up:
 	docker compose up -d
 
 infra/down:

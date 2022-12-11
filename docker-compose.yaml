@@ -81,7 +81,7 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: admin
     user: root
     volumes:
-      - ./observability/grafana-datasources:/etc/grafana/provisioning/datasources
+      - ./observability/grafana:/etc/grafana/provisioning
       - ./observability/grafana-data:/var/lib/grafana
     networks:
       - observability
@@ -132,6 +132,8 @@ services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: kat_cadvisor
+    profiles:
+      - observability
     networks:
       - observability
     volumes:
