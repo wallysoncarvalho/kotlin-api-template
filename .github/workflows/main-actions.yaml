@@ -66,12 +66,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-#      - name: Extract metadata (tags, labels) for Docker
-#        uses: docker/metadata-action@master
-#        id: meta
-#        with:
-#          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.GITHUB_SHA }}
-
       - name: Download build artifact
         uses: actions/download-artifact@v3
         with:
@@ -86,4 +80,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
