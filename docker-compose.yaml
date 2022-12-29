@@ -41,10 +41,11 @@ services:
       KC_METRICS_ENABLED: "true"
 
   backend-api:
-    image: wcs/kotlin-api-template:0.1
-    build:
-      context: .
-      dockerfile: Dockerfile
+#    image: wcs/kotlin-api-template:0.1
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+    image: ghcr.io/wallysoncarvalho/kotlin-api-template:latest
     container_name: kat_backend-api
     depends_on:
       - postgres
